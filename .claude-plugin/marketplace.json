@@ -1,0 +1,14 @@
+{
+  "name": "jumeau",
+  "owner": {
+    "name": "Gallisatyricon"
+  },
+  "description": "Le jumeau numérique et son usine, pour Claude: comprendre et maîtriser vos outils.",
+  "plugins": [
+    {
+      "name": "jumeau-usine",
+      "source": "./plugins/jumeau-usine",
+      "description": "Le jumeau apprend comment vous travaillez et l'écrit avec vous; l'usine en fait un outil, décidé avec vous et éprouvé sur vos vraies situations; un tableau de bord montre tout, et comment en sortir."
+    }
+  ]
+}

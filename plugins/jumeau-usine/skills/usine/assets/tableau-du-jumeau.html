@@ -1,0 +1,371 @@
+<title>Tableau de bord du jumeau</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Tableau de bord vivant: ce qui vous attend d'abord, puis les outils et leur niveau de permission, ce qu'ils produisent, les besoins, le journal. Données lues en direct dans la base de la page. */
+:root {
+  --fond: #f4f6f6; --papier: #ffffff; --encre: #17242a; --gris: #56656b; --trait: #d5dfe1;
+  --accent: #1f6070; --accent-doux: #e3eff1; --attente: #8a5a00; --attente-doux: #fbf1dc;
+  --ok: #2f6b3a; --ok-doux: #e5f2e7; --risque: #9a2f2f; --risque-doux: #f8e6e6;
+  --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --sans: "Public Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fond: #0f1719; --papier: #162225; --encre: #e4eced; --gris: #9fb0b4; --trait: #2c3b3f;
+    --accent: #7cc3d1; --accent-doux: #173238; --attente: #e7b65c; --attente-doux: #33270f;
+    --ok: #8fd19b; --ok-doux: #17301c; --risque: #f0a0a0; --risque-doux: #3a1c1c; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --fond: #0f1719; --papier: #162225; --encre: #e4eced; --gris: #9fb0b4; --trait: #2c3b3f;
+  --accent: #7cc3d1; --accent-doux: #173238; --attente: #e7b65c; --attente-doux: #33270f;
+  --ok: #8fd19b; --ok-doux: #17301c; --risque: #f0a0a0; --risque-doux: #3a1c1c; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--fond); color: var(--encre); font: 16px/1.55 var(--sans); margin: 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 56px; }
+main { max-width: 980px; margin: 0 auto; display: grid; gap: 26px; grid-template-columns: minmax(0, 1fr); }
+main > *, section { min-width: 0; }
+h1, h2, h3 { font-family: var(--serif); line-height: 1.2; text-wrap: balance; margin: 0; overflow-wrap: anywhere; word-break: break-word; }
+h1 { font-size: clamp(1.7rem, 4.5vw, 2.2rem); }
+h2 { font-size: 1.25rem; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+h2 .compte { font: 500 .85rem/1 var(--mono); color: var(--gris); }
+h3 { font-size: 1.05rem; }
+p { margin: 0; }
+.tete { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 10px 16px; }
+.tete .sous { color: var(--gris); font-size: .95rem; }
+.direct { display: inline-flex; align-items: center; gap: 8px; font: 600 .82rem/1 var(--sans); color: var(--gris); padding: 7px 11px; border: 1px solid var(--trait); border-radius: 99px; background: var(--papier); }
+.point { width: 9px; height: 9px; border-radius: 50%; background: var(--gris); }
+.direct.vivant .point { background: var(--ok); box-shadow: 0 0 0 0 var(--ok); animation: pouls 2s infinite; }
+@media (prefers-reduced-motion: reduce) { .direct.vivant .point { animation: none; } }
+@keyframes pouls { 0% { box-shadow: 0 0 0 0 rgba(47,107,58,.45); } 70% { box-shadow: 0 0 0 8px rgba(47,107,58,0); } 100% { box-shadow: 0 0 0 0 rgba(47,107,58,0); } }
+section { display: grid; gap: 12px; }
+.grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.carte { background: var(--papier); border: 1px solid var(--trait); border-radius: 12px; padding: 16px 18px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; align-content: start; min-width: 0; overflow-wrap: anywhere; }
+.carte.attente { border-left: 4px solid var(--attente); }
+.carte.repondue { border-left: 4px solid var(--ok); }
+.etiquette { font: 600 .74rem/1.4 var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--gris); }
+.pastille { display: inline-block; font: 600 .74rem/1.7 var(--sans); padding: 0 9px; border-radius: 99px; white-space: normal; max-width: 100%; overflow-wrap: anywhere; background: var(--fond); color: var(--gris); border: 1px solid var(--trait); }
+.pastille.ok { background: var(--ok-doux); color: var(--ok); border-color: transparent; }
+.pastille.attente { background: var(--attente-doux); color: var(--attente); border-color: transparent; }
+.pastille.risque { background: var(--risque-doux); color: var(--risque); border-color: transparent; }
+.ligne { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.choix { display: grid; gap: 8px; }
+.choix button { text-align: left; }
+button { overflow-wrap: anywhere; font: 600 .92rem/1.35 var(--sans); border-radius: 9px; padding: 10px 12px; border: 1px solid var(--accent); background: var(--papier); color: var(--accent); cursor: pointer; }
+button:hover { background: var(--accent-doux); }
+button.plein { background: var(--accent); color: var(--papier); }
+button:disabled { opacity: .55; cursor: default; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button small { display: block; font-weight: 400; color: var(--gris); margin-top: 2px; }
+.niveaux { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+.niveau { border: 1px solid var(--trait); border-radius: 8px; padding: 6px 4px; text-align: center; font: 500 .8rem/1.2 var(--sans); color: var(--gris); background: var(--fond); }
+.niveau b { display: block; font: 500 1rem/1.2 var(--mono); }
+.niveau.actuel { background: var(--accent); color: var(--papier); border-color: var(--accent); }
+.niveau.demande { border: 2px dashed var(--attente); color: var(--attente); }
+.paires { display: grid; grid-template-columns: minmax(0, 9.5rem) minmax(0, 1fr); gap: 6px 12px; margin: 0; font-size: .93rem; }
+.paires dt { color: var(--gris); }
+.paires dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .paires { grid-template-columns: minmax(0, 1fr); gap: 1px; } .paires dd { margin-bottom: 6px; } .niveau { font-size: .7rem; } }
+.texte { white-space: pre-wrap; background: var(--fond); border: 1px solid var(--trait); border-radius: 8px; padding: 10px 12px; font-size: .93rem; max-height: 16rem; overflow: auto; overflow-wrap: anywhere; }
+details > summary { cursor: pointer; color: var(--accent); font-weight: 600; font-size: .92rem; }
+.journal { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; background: var(--papier); border: 1px solid var(--trait); border-radius: 12px; }
+.journal li { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--trait); font-size: .93rem; overflow-wrap: anywhere; }
+.journal li > * { min-width: 0; }
+.journal li:last-child { border-bottom: 0; }
+.journal li.nouveau { animation: arrivee 2.5s ease-out; }
+@keyframes arrivee { from { background: var(--attente-doux); } to { background: transparent; } }
+@media (prefers-reduced-motion: reduce) { .journal li.nouveau { animation: none; } }
+.journal time { font: 500 .8rem/1.5 var(--mono); color: var(--gris); }
+.journal .qui { font-weight: 600; }
+.vide, .avis { color: var(--gris); font-size: .95rem; background: var(--papier); border: 1px dashed var(--trait); border-radius: 12px; padding: 14px 16px; }
+.avis.erreur { border-style: solid; border-color: var(--risque); color: var(--risque); }
+.note { color: var(--gris); font-size: .88rem; }
+</style>
+
+<main>
+  <header class="tete">
+    <div style="display:grid;gap:4px">
+      <span class="etiquette">Jumeau numérique</span>
+      <h1>Votre tableau de bord</h1>
+      <p class="sous">Ce que vos outils font, ce qu'ils attendent de vous, et ce que vous gardez.</p>
+    </div>
+    <span class="direct" id="direct" role="status"><span class="point" aria-hidden="true"></span><span id="etat-direct">Connexion…</span></span>
+  </header>
+
+  <p class="avis" id="avis" hidden></p>
+
+  <section aria-labelledby="t-attentes">
+    <h2 id="t-attentes">Ce qui vous attend <span class="compte" id="n-attentes"></span></h2>
+    <div class="grille" id="attentes"><p class="vide">Chargement de vos données…</p></div>
+  </section>
+
+  <section aria-labelledby="t-outils">
+    <h2 id="t-outils">Vos outils <span class="compte" id="n-outils"></span></h2>
+    <div class="grille" id="outils"></div>
+  </section>
+
+  <section aria-labelledby="t-prod">
+    <h2 id="t-prod">Ce qu'ils ont produit <span class="compte" id="n-prod"></span></h2>
+    <div class="grille" id="productions"></div>
+  </section>
+
+  <section aria-labelledby="t-besoins">
+    <h2 id="t-besoins">Vos besoins <span class="compte" id="n-besoins"></span></h2>
+    <div class="grille" id="besoins"></div>
+  </section>
+
+  <section aria-labelledby="t-journal">
+    <h2 id="t-journal">Le journal</h2>
+    <ul class="journal" id="journal"></ul>
+  </section>
+
+  <p class="note">Les niveaux de permission: 0 observer, 1 à blanc (montre ce qu'il aurait fait), 2 prépare (vous faites l'action), 3 agit sur votre oui, 4 agit seul dans des limites écrites. Un clic ici est enregistré et lu par les agents à leur prochain passage.</p>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var NIVEAUX = ["Observer", "À blanc", "Prépare", "Agit sur oui", "Agit seul"];
+  var etat = { docs: {}, vus: {} , premier: true };
+  var refCollection = null;
+
+  function el(tag, cls, txt) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (txt !== undefined && txt !== null && txt !== "") n.textContent = String(txt);
+    return n;
+  }
+  function t(v) { return typeof v === "string" ? v.trim() : (typeof v === "number" && isFinite(v) ? String(v) : ""); }
+  function liste(v) { return Array.isArray(v) ? v.filter(function (x) { return x !== null && x !== undefined; }) : []; }
+  function objet(v) { return v && typeof v === "object" && !Array.isArray(v) ? v : null; }
+  function quand(iso) {
+    var d = Date.parse(t(iso)); if (isNaN(d)) return "";
+    return new Date(d).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  }
+  function avis(texte, erreur) {
+    var a = document.getElementById("avis");
+    if (!texte) { a.hidden = true; return; }
+    a.textContent = texte; a.className = "avis" + (erreur ? " erreur" : ""); a.hidden = false;
+  }
+  function direct(vivant, texte) {
+    var d = document.getElementById("direct");
+    d.classList.toggle("vivant", !!vivant);
+    document.getElementById("etat-direct").textContent = texte;
+  }
+  function paires(lignes) {
+    var dl = el("dl", "paires");
+    lignes.forEach(function (l) {
+      var v = Array.isArray(l[1]) ? liste(l[1]).map(t).filter(Boolean).join(" ; ") : t(l[1]);
+      if (!v) return;
+      dl.appendChild(el("dt", "", l[0])); dl.appendChild(el("dd", "", v));
+    });
+    return dl;
+  }
+  function copier(texte, bouton) {
+    var fini = function (m) { var old = bouton.textContent; bouton.textContent = m; setTimeout(function () { bouton.textContent = old; }, 1600); };
+    try { navigator.clipboard.writeText(texte).then(function () { fini("Copié"); }, function () { fini("Copie refusée: sélectionnez le texte"); }); }
+    catch (e) { fini("Copie refusée: sélectionnez le texte"); }
+  }
+  function par(type) {
+    return Object.keys(etat.docs).map(function (id) { return { id: id, d: etat.docs[id] }; })
+      .filter(function (x) { return objet(x.d) && x.d.type === type; });
+  }
+  function ecrire(id, champs, bouton) {
+    if (!refCollection) return;
+    if (bouton) bouton.disabled = true;
+    refCollection.doc(id).update(champs).then(function () { avis(""); }, function (e) {
+      if (bouton) bouton.disabled = false;
+      avis("Votre réponse n'a pas pu être enregistrée (" + (e && e.code ? e.code : "erreur") + "). Réessayez, ou écrivez-la dans la conversation.", true);
+    });
+  }
+
+  function rendreAttentes() {
+    var zone = document.getElementById("attentes"); zone.textContent = "";
+    var items = par("attente").sort(function (a, b) { return (a.d.reponse ? 1 : 0) - (b.d.reponse ? 1 : 0) || t(a.d.cree).localeCompare(t(b.d.cree)); });
+    var ouvertes = items.filter(function (x) { return !t(x.d.reponse); }).length;
+    document.getElementById("n-attentes").textContent = ouvertes ? ouvertes + " à décider" : "rien à décider";
+    if (!items.length) { zone.appendChild(el("p", "vide", "Rien ne vous attend.")); return; }
+    items.forEach(function (x) {
+      var d = x.d, rep = t(d.reponse);
+      var c = el("article", "carte " + (rep ? "repondue" : "attente"));
+      var l = el("div", "ligne");
+      l.appendChild(el("span", "pastille " + (rep ? "ok" : "attente"), rep ? "décidé" : "à décider"));
+      if (t(d.outil)) l.appendChild(el("span", "note", t(d.outil)));
+      c.appendChild(l);
+      c.appendChild(el("h3", "", t(d.titre)));
+      if (t(d.detail)) c.appendChild(el("p", "", t(d.detail)));
+      if (rep) {
+        var choisi = liste(d.choix).filter(function (ch) { return objet(ch) && t(ch.id) === rep; })[0];
+        c.appendChild(el("p", "", "Votre réponse: " + (choisi ? t(choisi.nom) : rep) + (quand(d.repondu_le) ? ", le " + quand(d.repondu_le) : "") + "."));
+        c.appendChild(el("p", "note", t(d.suite) || "Enregistrée. Les agents la liront à leur prochain passage."));
+        if (quand(d.pris_en_compte_le)) c.appendChild(el("p", "note", "Pris en compte le " + quand(d.pris_en_compte_le) + "."));
+        var changer = el("button", "", "Changer ma réponse");
+        changer.type = "button";
+        changer.addEventListener("click", function () { ecrire(x.id, { reponse: "", repondu_le: "" }, changer); });
+        c.appendChild(changer);
+      } else {
+        var ch = el("div", "choix");
+        liste(d.choix).forEach(function (o) {
+          if (!objet(o) || !t(o.id)) return;
+          var b = el("button", "", t(o.nom)); b.type = "button";
+          if (t(o.detail)) b.appendChild(el("small", "", t(o.detail)));
+          b.addEventListener("click", function () { ecrire(x.id, { reponse: t(o.id), repondu_le: new Date().toISOString() }, b); });
+          ch.appendChild(b);
+        });
+        c.appendChild(ch);
+      }
+      zone.appendChild(c);
+    });
+  }
+
+  function rendreOutils() {
+    var zone = document.getElementById("outils"); zone.textContent = "";
+    var items = par("outil");
+    document.getElementById("n-outils").textContent = items.length ? String(items.length) : "";
+    if (!items.length) { zone.appendChild(el("p", "vide", "Aucun outil pour l'instant.")); return; }
+    items.forEach(function (x) {
+      var d = x.d;
+      var c = el("article", "carte");
+      var l = el("div", "ligne");
+      var et = t(d.etat);
+      l.appendChild(el("span", "pastille " + (et === "en service" ? "ok" : (et === "arrêté" ? "risque" : "attente")), et || "état inconnu"));
+      c.appendChild(l);
+      c.appendChild(el("h3", "", t(d.titre)));
+      if (t(d.resume)) c.appendChild(el("p", "", t(d.resume)));
+      var niv = Number(d.niveau), dem = d.niveau_demande === undefined || d.niveau_demande === null || d.niveau_demande === "" ? NaN : Number(d.niveau_demande);
+      var demLe = Date.parse(t(d.niveau_demande_le)), nivLe = Date.parse(t(d.niveau_le));
+      if (!isNaN(nivLe) && !(demLe > nivLe)) dem = NaN;
+      c.appendChild(el("span", "etiquette", "Niveau de permission"));
+      var bar = el("div", "niveaux");
+      NIVEAUX.forEach(function (nom, i) {
+        var n = el("div", "niveau" + (i === niv ? " actuel" : "") + (i === dem && i !== niv ? " demande" : ""));
+        n.appendChild(el("b", "", String(i))); n.appendChild(document.createTextNode(nom));
+        bar.appendChild(n);
+      });
+      c.appendChild(bar);
+      if (t(d.niveau_texte)) c.appendChild(el("p", "note", t(d.niveau_texte)));
+      if (!isNaN(dem) && dem !== niv) c.appendChild(el("p", "note", "Vous avez demandé le niveau " + dem + (quand(d.niveau_demande_le) ? " le " + quand(d.niveau_demande_le) : "") + ". " + (dem < niv ? "Une baisse s'applique au prochain passage de l'outil." : "Une hausse s'appliquera quand l'usine l'aura mise en place.")));
+      var det = el("details");
+      det.appendChild(el("summary", "", "Changer le niveau"));
+      var ch = el("div", "choix"); ch.style.marginTop = "8px";
+      NIVEAUX.forEach(function (nom, i) {
+        var b = el("button", "", i + ". " + nom); b.type = "button";
+        if (i === niv) { b.disabled = true; b.appendChild(el("small", "", "niveau actuel")); }
+        b.addEventListener("click", function () { ecrire(x.id, { niveau_demande: i, niveau_demande_le: new Date().toISOString() }, b); });
+        ch.appendChild(b);
+      });
+      det.appendChild(ch);
+      c.appendChild(det);
+      c.appendChild(paires([
+        ["Où il vit", d.ou], ["Quand il travaille", d.declencheur], ["De quoi il dépend", d.depend],
+        ["Ce qui part chez l'éditeur", d.editeur], ["Le risque", d.risque], ["Ses limites", d.limites], ["Ce qu'il ne peut pas faire", d.ne_peut_pas], ["Pour en sortir", d.sortie]
+      ]));
+      if (quand(d.maj)) c.appendChild(el("p", "note", "Mis à jour le " + quand(d.maj)));
+      zone.appendChild(c);
+    });
+  }
+
+  function rendreProductions() {
+    var zone = document.getElementById("productions"); zone.textContent = "";
+    var items = [];
+    par("productions").forEach(function (x) {
+      liste(x.d.items).forEach(function (it) { if (objet(it)) items.push({ it: it, outil: t(x.d.outil) }); });
+    });
+    items.sort(function (a, b) { return t(b.it.date).localeCompare(t(a.it.date)); });
+    document.getElementById("n-prod").textContent = items.length ? String(items.length) : "";
+    if (!items.length) { zone.appendChild(el("p", "vide", "Rien de produit pour l'instant.")); return; }
+    items.forEach(function (x) {
+      var it = x.it;
+      var c = el("article", "carte");
+      var l = el("div", "ligne");
+      if (it.essai === true) l.appendChild(el("span", "pastille attente", "essai de l'usine"));
+      if (t(it.statut)) l.appendChild(el("span", "pastille " + (t(it.statut) === "publié" ? "ok" : ""), t(it.statut)));
+      if (quand(it.date)) l.appendChild(el("span", "note", quand(it.date)));
+      c.appendChild(l);
+      c.appendChild(el("h3", "", t(it.titre)));
+      if (x.outil) c.appendChild(el("p", "note", x.outil));
+      if (t(it.texte)) {
+        c.appendChild(el("div", "texte", t(it.texte)));
+        var b = el("button", "plein", "Copier le texte"); b.type = "button";
+        b.addEventListener("click", function () { copier(t(it.texte), b); });
+        c.appendChild(b);
+      }
+      if (t(it.reste)) c.appendChild(el("p", "note", "Reste à faire: " + t(it.reste)));
+      zone.appendChild(c);
+    });
+  }
+
+  function rendreBesoins() {
+    var zone = document.getElementById("besoins"); zone.textContent = "";
+    var items = par("besoin");
+    document.getElementById("n-besoins").textContent = items.length ? String(items.length) : "";
+    if (!items.length) { zone.appendChild(el("p", "vide", "Aucun besoin enregistré.")); return; }
+    items.forEach(function (x) {
+      var d = x.d, c = el("article", "carte");
+      var l = el("div", "ligne"); var et = t(d.etat);
+      l.appendChild(el("span", "pastille " + (et.indexOf("pause") >= 0 ? "" : "attente"), et || "état inconnu"));
+      var etp = Number(t(d.etape));
+      if (t(d.etape) && etp >= 1 && etp <= 7 && Math.floor(etp) === etp) l.appendChild(el("span", "note", "Étape " + etp + " sur 7"));
+      c.appendChild(l);
+      c.appendChild(el("h3", "", t(d.titre)));
+      if (t(d.resume)) c.appendChild(el("p", "", t(d.resume)));
+      if (t(d.ou_en_est)) c.appendChild(el("p", "note", t(d.ou_en_est)));
+      zone.appendChild(c);
+    });
+  }
+
+  function rendreJournal() {
+    var zone = document.getElementById("journal"); zone.textContent = "";
+    var items = [];
+    par("journal").forEach(function (x) { liste(x.d.items).forEach(function (it) { if (objet(it)) items.push(it); }); });
+    items.sort(function (a, b) { return t(b.quand).localeCompare(t(a.quand)); });
+    if (!items.length) { var li0 = el("li"); li0.appendChild(el("span", "note", "Le journal est vide.")); zone.appendChild(li0); return; }
+    items.slice(0, 40).forEach(function (it) {
+      var cle = t(it.quand) + "|" + t(it.texte);
+      var li = el("li", (!etat.premier && !etat.vus[cle]) ? "nouveau" : "");
+      etat.vus[cle] = true;
+      var tm = el("time", "", quand(it.quand)); tm.setAttribute("datetime", t(it.quand));
+      var p = el("span");
+      if (t(it.qui)) { p.appendChild(el("span", "qui", t(it.qui) + ": ")); }
+      p.appendChild(document.createTextNode(t(it.texte)));
+      li.appendChild(tm); li.appendChild(p);
+      zone.appendChild(li);
+    });
+  }
+
+  function rendre() {
+    rendreAttentes(); rendreOutils(); rendreProductions(); rendreBesoins(); rendreJournal();
+    etat.premier = false;
+  }
+
+  (async function demarrer() {
+    var db = null, user = null;
+    try { db = await claude.use("db"); user = await claude.use("user"); } catch (e) { db = null; }
+    if (!db || !user) {
+      direct(false, "Hors ligne");
+      document.getElementById("attentes").textContent = "";
+      avis("Ce tableau de bord lit vos données en direct. Ouvrez-le depuis claude.ai, connecté à votre compte, pour les voir.");
+      return;
+    }
+    var id = null;
+    try { id = await user.id(); } catch (e) { id = null; }
+    if (!id) { direct(false, "Hors ligne"); avis("Connectez-vous à claude.ai pour voir vos données."); return; }
+    refCollection = db.collection("data/users/" + id);
+    refCollection.onSnapshot(function (snap) {
+      var docs = {};
+      snap.docs.forEach(function (s) { if (s.exists) docs[s.id] = s.data(); });
+      etat.docs = docs;
+      var heure = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+      direct(true, snap.metadata && snap.metadata.fromCache ? "En direct (synchronisation…)" : "En direct · " + heure);
+      rendre();
+    }, function (e) {
+      direct(false, "Coupé");
+      avis("La liaison avec vos données s'est coupée (" + (e && e.code ? e.code : "erreur") + "). Rechargez la page.", true);
+    });
+  })();
+})();
+</script>

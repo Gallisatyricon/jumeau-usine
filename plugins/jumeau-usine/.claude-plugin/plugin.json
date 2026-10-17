@@ -1,0 +1,8 @@
+{
+  "name": "jumeau-usine",
+  "version": "0.4.1",
+  "description": "Le jumeau numérique et son usine: le jumeau apprend comment vous travaillez et l'écrit avec vous dans une fiche; l'usine en fait un outil, décidé avec vous avant de construire, mis en place et éprouvé sur vos vraies situations.",
+  "author": {
+    "name": "Jumeau numérique"
+  }
+}
